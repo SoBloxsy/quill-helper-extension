@@ -4,34 +4,54 @@ console.log('Helper script running');
   "use strict";
 
   function clearContent(mainElement) {
-    
     const styles = document.createElement("style");
     styles.innerText = `
-        .floating-container {
+        .sidebar-container {
             position: fixed;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.9);
+            top: 0;
+            right: 0;
+            height: 100vh;
+            width: 300px;
+            background: rgb(237 237 237);
             padding: 15px;
-            border-radius: 5px;
             z-index: 9999;
-            cursor: move;
-            max-height: 80vh;
             overflow-y: auto;
-            max-width: 400px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            box-shadow: -2px 0 10px rgba(0,0,0,0.5);
+            transition: transform 0.3s ease;
+        }
+        .sidebar-toggle {
+            position: fixed;
+    top: 20px;
+    right: 300px;
+    background: rgb(241 241 241);
+    color: #06806b;
+    padding: 8px;
+    cursor: pointer;
+    border-radius: 5px 0 0 5px;
+    z-index: 9999;
+    border-style: none;
+        }
+        .sidebar-container.collapsed {
+            transform: translateX(300px);
+        }
+        .sidebar-toggle.collapsed {
+            right: 0;
         }
         .questions, .answer {
-            color: red;
-            background: black;
-            margin: 5px 0;
-            padding: 10px;
-            border-radius: 3px;
+            color: #3f3f3f;
+    background: #e5e5e5;
+    margin: 5px 0;
+    padding: 10px;
+    border-radius: 3px;
         }
+    .answer {
+    background: #ffffff;
+    }
         hr {
             border-color: #333;
+                background-color: #06806b;
         }
-        `;
+    `;
     document.head.appendChild(styles);
   }
 
@@ -48,95 +68,84 @@ console.log('Helper script running');
   }
 
   function displayQuestionsAndAnswers(mainElement, questions, responses) {
- 
+    // Create sidebar container
+    const sidebarDiv = document.createElement("div");
+    sidebarDiv.className = "sidebar-container";
 
-    // Create floating container
-    const floatingDiv = document.createElement("div");
-    floatingDiv.className = "floating-container";
-    document.body.appendChild(floatingDiv);
+    // Create toggle button
+    const toggleButton = document.createElement("button");
+    toggleButton.className = "sidebar-toggle";
+    toggleButton.innerHTML = "◀";
+    toggleButton.addEventListener('click', () => {
+      sidebarDiv.classList.toggle('collapsed');
+      toggleButton.classList.toggle('collapsed');
+      toggleButton.innerHTML = sidebarDiv.classList.contains('collapsed') ? '▶' : '◀';
+    });
 
-    // Make it draggable
-    let isDragging = false;
-    let currentX;
-    let currentY;
-    let initialX;
-    let initialY;
+    document.body.appendChild(sidebarDiv);
+    document.body.appendChild(toggleButton);
 
-    floatingDiv.addEventListener('mousedown', dragStart);
-    document.addEventListener('mousemove', drag);
-    document.addEventListener('mouseup', dragEnd);
+    //Add title to sidebar
+    const titleh2 = document.createElement("h2");
+    titleh2.className = "helpertitle";
+    titleh2.textContent = `Quill Helper by Iren`;
+    titleh2.style.fontSize = '28px';
+    sidebarDiv.appendChild(titleh2);
 
-    function dragStart(e) {
-      initialX = e.clientX - floatingDiv.offsetLeft;
-      initialY = e.clientY - floatingDiv.offsetTop;
-      if (e.target === floatingDiv) {
-        isDragging = true;
-      }
-    }
+    // Add Description to sidebar
+    const description = document.createElement("p");
+    description.className = "helperdescription";
+    description.textContent = `Click the response to input it into the text area.`;
+    description.style.fontSize = '22px';
+    sidebarDiv.appendChild(description);
 
-    function drag(e) {
-      if (isDragging) {
-        e.preventDefault();
-        currentX = e.clientX - initialX;
-        currentY = e.clientY - initialY;
-        floatingDiv.style.left = `${currentX}px`;
-        floatingDiv.style.top = `${currentY}px`;
-      }
-    }
-
-    function dragEnd(e) {
-      isDragging = false;
-    }
-
-    // Add content to floating div
+    // Add content to sidebar
     questions.forEach((question, index) => {
+
       const questionDiv = document.createElement("div");
       questionDiv.className = "questions";
-      questionDiv.textContent = `Question: ${question.key}`;
-      floatingDiv.appendChild(questionDiv);
+      questionDiv.textContent = `Question: ${index + 1} (${question.key}) `;
+      sidebarDiv.appendChild(questionDiv);
 
       const responseDiv = document.createElement("div");
       responseDiv.className = "answer";
-      responseDiv.textContent = `Response: ${responses[index]}`;
-      // Add click event listener to response div
+      responseDiv.textContent = `Answer: ${responses[index]}`;
+      responseDiv.style.cursor = 'pointer';
       responseDiv.addEventListener('click', () => {
-        const textArea = document.querySelector('.connect-text-area, .input-field ');
+        const textArea = document.querySelector('.connect-text-area, .input-field');
         if (textArea) {
           textArea.innerText = responses[index];
-          // Trigger input event to ensure any listeners on the textarea are notified
           textArea.dispatchEvent(new Event('input', { bubbles: true }));
         }
       });
-      // Add cursor pointer style to indicate clickable
-      responseDiv.style.cursor = 'pointer';
-      floatingDiv.appendChild(responseDiv);
+      sidebarDiv.appendChild(responseDiv);
 
       const separator = document.createElement("hr");
-      floatingDiv.appendChild(separator);
+      sidebarDiv.appendChild(separator);
     });
   }
 
   async function fetchResponses(questions) {
-      const responses = [];
-      for (const question of questions) {
-        try {
-          const responseUrl = `https://cms.quill.org/questions/${question.key}/responses`;
-          const response = await fetch(responseUrl);
-          const responseData = await response.json();
-  
-          if (Array.isArray(responseData) && responseData.length > 0) {
-            // Find the first response with spelling_error: false
-            const validResponse = responseData.find(r => r.optimal === true);
-            // If found, use it; otherwise use the first response
-            responses.push(validResponse ? validResponse.text : responseData[0].text);
-          }
-        } catch (error) {
-          console.error(`Error fetching response:`, error);
-          responses.push("Error fetching response");
+    const responses = [];
+    for (const question of questions) {
+      try {
+        const responseUrl = `https://cms.quill.org/questions/${question.key}/responses`;
+        const response = await fetch(responseUrl);
+        const responseData = await response.json();
+
+        if (Array.isArray(responseData) && responseData.length > 0) {
+          // Find the first response with spelling_error: false
+          const validResponse = responseData.find(r => r.optimal === true && r.spelling_error === false);
+          // If found, use it; otherwise use the first response
+          responses.push(validResponse ? validResponse.text : responseData[0].text);
         }
+      } catch (error) {
+        console.error(`Error fetching response:`, error);
+        responses.push("Error fetching response");
       }
-      return responses;
     }
+    return responses;
+  }
 
   async function processQuestions(mainElement) {
 
@@ -146,7 +155,7 @@ console.log('Helper script running');
     let lessonId = id;
     if (!lessonId) {
       const hashPart = currentUrl.split('#')[1] || '';
-    
+
       const urlParams = new URLSearchParams(hashPart.split('?')[1] || '');
       lessonId = urlParams.get('uid');
 
@@ -167,11 +176,11 @@ console.log('Helper script running');
   }
 
   function waitForMain(callback) {
-  
+
     const observer = new MutationObserver((mutations) => {
       const mainElement = document.querySelector("main, .main, #main, [role='main']");
       if (mainElement) {
-     
+
         observer.disconnect();
         callback(mainElement);
       }
