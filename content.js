@@ -114,7 +114,7 @@ console.log('Helper script running');
       // Add correct response
       const responseDiv = document.createElement("div");
       responseDiv.className = "answer";
-      responseDiv.textContent = `Correct Answer: ${responses[index]}`;
+      responseDiv.textContent = `Answer: ${responses[index]}`;
       responseDiv.style.cursor = 'pointer';
       responseDiv.addEventListener('click', () => {
         const textArea = document.querySelector('.connect-text-area, .input-field');
@@ -126,10 +126,10 @@ console.log('Helper script running');
       sidebarDiv.appendChild(responseDiv);
 
       // Add wrong response if you want to display it
-      const wrongResponseDiv = document.createElement("div");
-      wrongResponseDiv.className = "answer wrong";
-      wrongResponseDiv.textContent = `Wrong Answer: ${wrongresponses[index]}`;
-      sidebarDiv.appendChild(wrongResponseDiv);
+      // const wrongResponseDiv = document.createElement("div");
+      // wrongResponseDiv.className = "answer wrong";
+      // wrongResponseDiv.textContent = `Wrong Answer: ${wrongresponses[index]}`;
+      // sidebarDiv.appendChild(wrongResponseDiv);
 
       const separator = document.createElement("hr");
       sidebarDiv.appendChild(separator);
