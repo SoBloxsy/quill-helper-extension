@@ -82,6 +82,10 @@ console.log('Helper script running');
       toggleButton.innerHTML = sidebarDiv.classList.contains('collapsed') ? '▶' : '◀';
     });
 
+    // Start it hidden
+    sidebarDiv.classList.toggle('collapsed');
+    toggleButton.classList.toggle('collapsed');
+
     document.body.appendChild(sidebarDiv);
     document.body.appendChild(toggleButton);
 
@@ -122,6 +126,8 @@ console.log('Helper script running');
 
       const separator = document.createElement("hr");
       sidebarDiv.appendChild(separator);
+
+
     });
   }
 
