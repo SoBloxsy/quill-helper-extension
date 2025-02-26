@@ -22,6 +22,7 @@ The extension operates on any page under the `https://www.quill.org/*` domain.
 4. Click **"Load Unpacked"** and select the folder containing the extension files.
 5. Open **quill.org**, navigate to a lesson, and interact with multiple-choice questions.
 
-### License
+### Credit
 
-This project is licensed under the MIT License.
+[quill-cheat](https://github.com/MysticalMike60t/quill-cheat)
+
