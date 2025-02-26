@@ -67,7 +67,7 @@ console.log('Helper script running');
     };
   }
 
-  function displayQuestionsAndAnswers(mainElement, questions, responses) {
+  function displayQuestionsAndAnswers(mainElement, questions, [responses, wrongresponses]) {
     // Create sidebar container
     const sidebarDiv = document.createElement("div");
     sidebarDiv.className = "sidebar-container";
@@ -111,9 +111,10 @@ console.log('Helper script running');
       questionDiv.textContent = `Question: ${index + 1} (${question.key}) `;
       sidebarDiv.appendChild(questionDiv);
 
+      // Add correct response
       const responseDiv = document.createElement("div");
       responseDiv.className = "answer";
-      responseDiv.textContent = `Answer: ${responses[index]}`;
+      responseDiv.textContent = `Correct Answer: ${responses[index]}`;
       responseDiv.style.cursor = 'pointer';
       responseDiv.addEventListener('click', () => {
         const textArea = document.querySelector('.connect-text-area, .input-field');
@@ -124,6 +125,12 @@ console.log('Helper script running');
       });
       sidebarDiv.appendChild(responseDiv);
 
+      // Add wrong response if you want to display it
+      const wrongResponseDiv = document.createElement("div");
+      wrongResponseDiv.className = "answer wrong";
+      wrongResponseDiv.textContent = `Wrong Answer: ${wrongresponses[index]}`;
+      sidebarDiv.appendChild(wrongResponseDiv);
+
       const separator = document.createElement("hr");
       sidebarDiv.appendChild(separator);
 
@@ -133,25 +140,53 @@ console.log('Helper script running');
 
   async function fetchResponses(questions) {
     const responses = [];
-    for (const question of questions) {
-      try {
-        const responseUrl = `https://cms.quill.org/questions/${question.key}/responses`;
-        const response = await fetch(responseUrl);
-        const responseData = await response.json();
-
-        if (Array.isArray(responseData) && responseData.length > 0) {
-          // Find the first response with spelling_error: false
-          const validResponse = responseData.find(r => r.optimal === true && r.spelling_error === false);
-          // If found, use it; otherwise use the first response
-          responses.push(validResponse ? validResponse.text : responseData[0].text);
-        }
-      } catch (error) {
-        console.error(`Error fetching response:`, error);
-        responses.push("Error fetching response");
-      }
+    const wrongresponses = [];
+    
+    if (!Array.isArray(questions) || questions.length === 0) {
+        console.error('No questions provided or invalid questions array');
+        return [[], []];
     }
-    return responses;
-  }
+
+    for (const question of questions) {
+        try {
+            if (!question.key) {
+                console.error('Question key is missing:', question);
+                responses.push("Invalid question data");
+                wrongresponses.push("Invalid question data");
+                continue;
+            }
+
+            const responseUrl = `https://cms.quill.org/questions/${question.key}/responses`;
+            const response = await fetch(responseUrl);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const responseData = await response.json();
+
+            if (!Array.isArray(responseData) || responseData.length === 0) {
+                console.warn(`No valid responses for question ${question.key}`);
+                responses.push("No valid response available");
+                wrongresponses.push("No valid response available");
+                continue;
+            }
+
+            const validResponse = responseData.find(r => r.optimal === true && r.spelling_error === false);
+            const wrongResponse = responseData.find(r => r.optimal === false && r.spelling_error === true);
+            
+            responses.push(validResponse ? validResponse.text : responseData[0].text);
+            wrongresponses.push(wrongResponse ? wrongResponse.text : responseData[0].text);
+
+        } catch (error) {
+            console.error(`Error fetching response for question ${question.key}:`, error);
+            responses.push("Error fetching response");
+            wrongresponses.push("Error fetching response");
+        }
+    }
+
+    return [responses, wrongresponses];
+}
 
   async function processQuestions(mainElement) {
 
@@ -175,6 +210,7 @@ console.log('Helper script running');
       const questions = jsonData.questions || [];
 
       const responses = await fetchResponses(questions);
+      console.log(responses);
       displayQuestionsAndAnswers(mainElement, questions, responses);
     } catch (error) {
       console.error("Error processing questions:", error);
