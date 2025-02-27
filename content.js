@@ -92,7 +92,7 @@ console.log('Helper script running');
     //Add title to sidebar
     const titleh2 = document.createElement("h2");
     titleh2.className = "helpertitle";
-    titleh2.textContent = `Quill Helper by Iren`;
+    titleh2.textContent = `Quill Helper`;
     titleh2.style.fontSize = '28px';
     sidebarDiv.appendChild(titleh2);
 
@@ -100,10 +100,20 @@ console.log('Helper script running');
     const description = document.createElement("p");
     description.className = "helperdescription";
     description.textContent = `Click the response to input it into the text area.`;
-    description.style.fontSize = '22px';
+    description.style.fontSize = '18px';
     sidebarDiv.appendChild(description);
 
     // Add content to sidebar
+
+    // if no questions then add a message saying no questions
+    if (questions.length === 0) {
+      console.log('No questions found for this lesson.');
+      const noQuestionsMessage = document.createElement("p");
+      noQuestionsMessage.textContent = "No questions available for this lesson.";
+      sidebarDiv.appendChild(noQuestionsMessage);
+      return;
+    }
+
     questions.forEach((question, index) => {
 
       const questionDiv = document.createElement("div");
@@ -136,6 +146,14 @@ console.log('Helper script running');
 
 
     });
+
+    //Gotta have credits
+    const credits = document.createElement("p");
+    credits.className = "credits";
+    credits.innerHTML = `This extension is open source and can be found on <a herf="https://github.com/SoBloxsy/quill-helper-extension">github</a>`;
+    credits.style.fontSize = '12px';
+    sidebarDiv.appendChild(credits);
+
   }
 
   async function fetchResponses(questions) {
@@ -210,7 +228,6 @@ console.log('Helper script running');
       const questions = jsonData.questions || [];
 
       const responses = await fetchResponses(questions);
-      console.log(responses);
       displayQuestionsAndAnswers(mainElement, questions, responses);
     } catch (error) {
       console.error("Error processing questions:", error);
